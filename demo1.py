@@ -130,6 +130,11 @@ def chatbot_page3():
     import faiss
     import numpy as np
     from nltk import sent_tokenize
+    import nltk
+    nltk.download('punkt_tab')
+    import nltk
+    print(nltk.data.path)
+
 
     # Load Models
     embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
