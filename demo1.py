@@ -338,7 +338,7 @@ def main():
         menu = st.sidebar.radio("Navigate to", ["text summ","PDF Q-A","Text-to-Image caption generator"])
         if menu == "text summ":
             chatbot_page2()
-         elif menu == "PDF Q-A":
+        elif menu == "PDF Q-A":
             chatbot_page3()
         elif menu == "Text-to-Image caption generator":
             chatbot_page4()
