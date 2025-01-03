@@ -289,6 +289,7 @@ def chatbot_page3():
     st.sidebar.info("Powered by OpenCV and Streamlit")
 
 import streamlit as st
+from transformers import BlipForConditionalGeneration
 from transformers import BlipProcessor, BlipForConditionalGeneration
 from PIL import Image
 
