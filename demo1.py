@@ -150,95 +150,7 @@ def chatbot_page2():
             st.warning("Please enter some text to summarize.")
 
 
-def chatbot_page3():
-    # Footer
-    import streamlit as st
 
-    st.sidebar.info("Powered by Hugging Face Transformers and Streamlit")
-    st.markdown("""
-                <div class='header-container'>
-                    <h1>🤖Advanced Image Enhancement</h1>
-                    <p>Chat with AI, extract PDF insights, and generate reports.</p>
-                </div>
-            """, unsafe_allow_html=True)
-    import streamlit as st
-    import cv2
-    from PIL import Image
-    import numpy as np
-
-    # Title and description
-    # st.title("Advanced Image Enhancement with Streamlit")
-    st.write(
-        "Upload an image and apply various enhancement techniques such as brightness, contrast, sharpening, denoising, and edge detection.")
-
-    # Sidebar for image upload
-    st.sidebar.title("Upload Options")
-    uploaded_file = st.sidebar.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
-
-    # Sidebar enhancement options
-    st.sidebar.title("Enhancement Options")
-    enhancement = st.sidebar.selectbox(
-        "Select Enhancement Type:",
-        ("Original", "Brightness & Contrast", "Sharpening", "Denoising", "Edge Detection")
-    )
-
-    # Brightness and contrast sliders
-    if enhancement == "Brightness & Contrast":
-        brightness = st.sidebar.slider("Brightness", -100, 100, 0)
-        contrast = st.sidebar.slider("Contrast", -100, 100, 0)
-
-    # Sharpening slider
-    if enhancement == "Sharpening":
-        sharpness_level = st.sidebar.slider("Sharpening Intensity", 1, 5, 3)
-
-    # Denoising slider
-    if enhancement == "Denoising":
-        denoise_strength = st.sidebar.slider("Denoising Strength", 1, 30, 10)
-
-    # Edge Detection slider
-    if enhancement == "Edge Detection":
-        edge_threshold1 = st.sidebar.slider("Threshold 1", 50, 200, 100)
-        edge_threshold2 = st.sidebar.slider("Threshold 2", 50, 200, 150)
-
-    # Function to apply enhancements
-    def enhance_image(image, enhancement_type):
-        if enhancement_type == "Brightness & Contrast":
-            enhanced_image = cv2.convertScaleAbs(image, alpha=1 + contrast / 100, beta=brightness)
-        elif enhancement_type == "Sharpening":
-            kernel = np.array([[0, -1, 0], [-1, sharpness_level + 4, -1], [0, -1, 0]])
-            enhanced_image = cv2.filter2D(image, -1, kernel)
-        elif enhancement_type == "Denoising":
-            enhanced_image = cv2.fastNlMeansDenoisingColored(image, None, denoise_strength, denoise_strength, 7, 21)
-        elif enhancement_type == "Edge Detection":
-            gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            enhanced_image = cv2.Canny(gray_image, edge_threshold1, edge_threshold2)
-        else:
-            enhanced_image = image
-        return enhanced_image
-
-    # Process the uploaded image
-    if uploaded_file is not None:
-        # Load image
-        image = Image.open(uploaded_file)
-        image_array = np.array(image)
-
-        # Apply enhancement
-        enhanced_image = enhance_image(image_array, enhancement)
-
-        # Display images
-        st.subheader("Original Image")
-        st.image(image, use_column_width=True)
-
-        st.subheader(f"Enhanced Image - {enhancement}")
-        if enhancement == "Edge Detection":
-            st.image(enhanced_image, channels="GRAY", use_column_width=True)
-        else:
-            st.image(enhanced_image, use_column_width=True)
-    else:
-        st.write("Please upload an image to start enhancement.")
-
-    # Footer
-    st.sidebar.info("Powered by OpenCV and Streamlit")
 
 import streamlit as st
 from transformers import BlipForConditionalGeneration
@@ -304,9 +216,6 @@ def main():
         menu = st.sidebar.radio("Navigate to", ["text summ","Image Enhancement","Text-to-Image caption generator"])
         if menu == "text summ":
             chatbot_page2()
-        
-        elif menu == "Image Enhancement":
-            chatbot_page3()
         elif menu == "Text-to-Image caption generator":
             chatbot_page4()
 
