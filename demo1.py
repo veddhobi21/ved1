@@ -90,55 +90,7 @@ def chatbot_page1():
                         </div>
                     """, unsafe_allow_html=True)
 
-    def image_processing():
-        import pytesseract
-        """Image Processing and OCR Functionality."""
-        # st.header("Image Processing & OCR")
-        uploaded_image = st.file_uploader("Upload an image (png, jpg, jpeg):", type=["png", "jpg", "jpeg"])
-
-        if uploaded_image is not None:
-            image = Image.open(uploaded_image)
-            st.image(image, caption="Uploaded Image", use_column_width=True)
-
-            # Sidebar: Image Manipulation Options
-            st.sidebar.header("Image Manipulation Options")
-            action = st.sidebar.radio("Choose an action:", ["None", "Resize", "Crop", "Filter"])
-
-            if action == "Resize":
-                width = st.sidebar.number_input("Width", min_value=50, max_value=2000, value=300)
-                height = st.sidebar.number_input("Height", min_value=50, max_value=2000, value=300)
-                resized_image = image.resize((int(width), int(height)))
-                st.image(resized_image, caption="Resized Image", use_column_width=True)
-
-            elif action == "Crop":
-                left = st.sidebar.slider("Left", 0, image.width, 0)
-                top = st.sidebar.slider("Top", 0, image.height, 0)
-                right = st.sidebar.slider("Right", 0, image.width, image.width)
-                bottom = st.sidebar.slider("Bottom", 0, image.height, image.height)
-                cropped_image = image.crop((left, top, right, bottom))
-                st.image(cropped_image, caption="Cropped Image", use_column_width=True)
-
-            elif action == "Filter":
-                filter_type = st.sidebar.radio("Select Filter", ["Grayscale", "Blur", "Edge Detection"])
-                if filter_type == "Grayscale":
-                    filtered_image = ImageOps.grayscale(image)
-                elif filter_type == "Blur":
-                    filtered_image = image.filter(ImageFilter.BLUR)
-                elif filter_type == "Edge Detection":
-                    filtered_image = image.filter(ImageFilter.FIND_EDGES)
-                st.image(filtered_image, caption=f"{filter_type} Image", use_column_width=True)
-
-            # OCR Functionality
-            if st.sidebar.button("Extract Text (OCR)"):
-                with st.spinner("Extracting text..."):
-                    extracted_text = pytesseract.image_to_string(image)
-                    st.text_area("Extracted Text", extracted_text, height=250)
-        else:
-            st.info("Please upload an image to proceed.")
-
-    if __name__ == "__main__":
-        image_processing()
-
+    
 def chatbot_page2():
     import streamlit as st
 
@@ -349,11 +301,10 @@ def main():
         elif page == "Register":
             registration_page()
     else:
-        menu = st.sidebar.radio("Navigate to", ["Image to PDF","text summ","Image Enhancement","Text-to-Image caption generator"])
-        if menu == "Image to PDF":
-            chatbot_page1()
-        elif menu == "text summ":
+        menu = st.sidebar.radio("Navigate to", ["text summ","Image Enhancement","Text-to-Image caption generator"])
+        if menu == "text summ":
             chatbot_page2()
+        
         elif menu == "Image Enhancement":
             chatbot_page3()
         elif menu == "Text-to-Image caption generator":
