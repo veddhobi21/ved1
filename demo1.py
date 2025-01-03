@@ -81,14 +81,136 @@ def login_page():
                 st.success(f"Welcome, {username}!")
             else:
                 st.error("Invalid username or password.")
-
-def chatbot_page1():
-    from PIL import Image, ImageOps, ImageFilter
+def chatbot_page3():
     st.markdown("""
-                        <div class='header-container'>
-                            <h2>Image Processing & OCR.</h2>
-                        </div>
-                    """, unsafe_allow_html=True)
+            <div class='header-container'>
+                <h1>🤖Advance PDF Q-A Chatbot</h1>
+                <p>Chat with AI, extract PDF insights, and generate reports.</p>
+            </div>
+        """, unsafe_allow_html=True)
+    # import pdfplumber
+    # def extract_text_from_pdf(pdf_file):
+    #     pdf_text = ""
+    #     with pdfplumber.open(pdf_file) as pdf:
+    #         for page in pdf.pages:
+    #             pdf_text += page.extract_text()
+    #     return pdf_text
+    #
+    # def answer_question(text, question):
+    #     # Simple keyword-based search
+    #     sentences = text.split('. ')
+    #     sentences = [s.strip() for s in sentences if s]
+    #     best_sentence = max(sentences, key=lambda s: s.lower().count(question.lower()),
+    #                         default="No relevant answer found.")
+    #     return best_sentence
+    #
+    # st.title("PDF Chatbot")
+    #
+    # # File uploader
+    # pdf_file = st.file_uploader("Upload a PDF", type="pdf")
+    #
+    # if pdf_file:
+    #     # Extract text from PDF
+    #     pdf_text = extract_text_from_pdf(pdf_file)
+    #     st.write("PDF text extracted successfully.")
+    #
+    #     # Display extracted text (for debugging or confirmation)
+    #     st.text_area("Extracted PDF Text", pdf_text, height=300)
+    #
+    #     # Question input
+    #     question = st.text_input("Ask a question about the PDF content:")
+    #
+    #     if question:
+    #         # Get answer
+    #         answer = answer_question(pdf_text, question)
+    #         st.write("Answer:", answer)
+    from PyPDF2 import PdfReader
+    from transformers import pipeline
+    from sentence_transformers import SentenceTransformer
+    import faiss
+    import numpy as np
+    from nltk import sent_tokenize
+
+    # Load Models
+    embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+    qa_model = pipeline("question-answering", model="deepset/roberta-base-squad2")
+
+    # Initialize FAISS Index
+    dimension = 384  # Embedding size for the model
+    index = faiss.IndexFlatL2(dimension)
+    text_data = []  # Store text chunks for reference
+
+    # Function to Extract Text from PDF
+    def extract_text_from_pdf(pdf_file):
+        reader = PdfReader(pdf_file)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text()
+        return text
+
+    # Function to Split Text into Logical Chunks
+    def split_text_to_chunks(text, max_length=500):
+        sentences = sent_tokenize(text)
+        chunks = []
+        current_chunk = ""
+        for sentence in sentences:
+            if len(current_chunk) + len(sentence) <= max_length:
+                current_chunk += sentence + " "
+            else:
+                chunks.append(current_chunk.strip())
+                current_chunk = sentence + " "
+        if current_chunk:
+            chunks.append(current_chunk.strip())
+        return chunks
+
+    # Streamlit App
+    # st.title("Advanced PDF Q&A Chatbot")
+
+    uploaded_pdf = st.file_uploader("Upload a PDF", type="pdf")
+    if uploaded_pdf:
+        with st.spinner("Processing the PDF..."):
+            raw_text = extract_text_from_pdf(uploaded_pdf)
+            chunks = split_text_to_chunks(raw_text)
+
+            # Embed chunks and build FAISS index
+            embeddings = embedding_model.encode(chunks, convert_to_tensor=False)
+            embeddings = np.array(embeddings)
+            index.add(embeddings)
+            text_data.extend(chunks)
+
+        st.success("PDF uploaded and indexed!")
+
+    query = st.text_input("Ask a question:")
+    if query:
+        # Embed the query and find relevant chunks
+        query_embedding = embedding_model.encode([query], convert_to_tensor=False)
+        distances, indices = index.search(np.array(query_embedding), k=3)  # Retrieve top 3 chunks
+
+        # Refine the answer with extractive Q&A
+        candidate_answers = []
+        for idx in indices[0]:
+            chunk = text_data[idx]
+            result = qa_model(question=query, context=chunk)
+            candidate_answers.append((result['answer'], result['score'], chunk))
+
+        # Sort by confidence and display the best answer
+        best_answer = max(candidate_answers, key=lambda x: x[1])
+        st.write(f"**Answer:** {best_answer[0]}")
+        st.write(f"**Confidence:** {best_answer[1]:.2f}")
+        st.write(f"**Relevant Context:** {best_answer[2]}")
+
+        # Log the top 3 answers for transparency
+        with st.expander("See other possible answers"):
+            for ans, score, context in candidate_answers:
+                st.write(f"- **Answer:** {ans}\n  **Confidence:** {score:.2f}\n  **Context:** {context[:200]}...")
+
+    # Summarization for Quick Overview
+    if st.checkbox("Summarize PDF Content"):
+        summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+        summary = summarizer(raw_text, max_length=150, min_length=30, do_sample=False)
+        st.write("**Summary:**")
+        st.write(summary[0]['summary_text'])
+
 
     
 def chatbot_page2():
@@ -213,9 +335,11 @@ def main():
         elif page == "Register":
             registration_page()
     else:
-        menu = st.sidebar.radio("Navigate to", ["text summ","Image Enhancement","Text-to-Image caption generator"])
+        menu = st.sidebar.radio("Navigate to", ["text summ","PDF Q-A","Text-to-Image caption generator"])
         if menu == "text summ":
             chatbot_page2()
+         elif menu == "PDF Q-A":
+            chatbot_page3()
         elif menu == "Text-to-Image caption generator":
             chatbot_page4()
 
